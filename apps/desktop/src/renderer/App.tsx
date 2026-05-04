@@ -9,13 +9,13 @@ import { WorkspaceSetupPage } from "./pages/WorkspaceSetupPage";
  * In the real app, this checks SQLite via IPC for existing workspaces.
  */
 export function App() {
-	const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
-		null,
-	);
+  const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
+    null,
+  );
 
-	if (!activeWorkspace) {
-		return <WorkspaceSetupPage onWorkspaceCreated={setActiveWorkspace} />;
-	}
+  if (!activeWorkspace) {
+    return <WorkspaceSetupPage onWorkspaceCreated={setActiveWorkspace} />;
+  }
 
-	return <BoardPage workspace={activeWorkspace} />;
+  return <BoardPage workspace={activeWorkspace} />;
 }

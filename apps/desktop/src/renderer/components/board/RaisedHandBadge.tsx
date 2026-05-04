@@ -16,17 +16,17 @@
 import { memo } from "react";
 
 interface RaisedHandBadgeProps {
-	agentProvider: string;
+  agentProvider: string;
 }
 
 export const RaisedHandBadge = memo(function RaisedHandBadge({
-	agentProvider,
+  agentProvider,
 }: RaisedHandBadgeProps) {
-	// Framer Motion AnimatePresence + spring physics implemented here
-	// Using layoutId for morphing pill transition
-	return (
-		<div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent text-white text-[10px] font-mono">
-			{agentProvider} needs you
-		</div>
-	);
+  // Framer Motion AnimatePresence + spring physics implemented here
+  // Using layoutId for morphing pill transition
+  return (
+    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent text-white text-[10px] font-mono">
+      {agentProvider} needs you
+    </div>
+  );
 });

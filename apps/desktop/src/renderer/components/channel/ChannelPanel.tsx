@@ -22,69 +22,69 @@ import type { Channel } from "@riza/shared";
 import { memo, useEffect, useRef } from "react";
 
 interface ChannelPanelProps {
-	channel: Channel;
+  channel: Channel;
 }
 
 export const ChannelPanel = memo(function ChannelPanel({
-	channel,
+  channel,
 }: ChannelPanelProps) {
-	const bottomRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-	useEffect(() => {
-		bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-	}, [channel.messages.length]);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [channel.messages.length]);
 
-	return (
-		<div className="flex flex-col h-full">
-			{/* Messages */}
-			<div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3">
-				{channel.messages.length === 0 && (
-					<div className="flex items-center justify-center py-12">
-						<p className="text-text-tertiary text-xs font-mono">
-							No messages yet. Agent activity will appear here.
-						</p>
-					</div>
-				)}
+  return (
+    <div className="flex flex-col h-full">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3">
+        {channel.messages.length === 0 && (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-text-tertiary text-xs font-mono">
+              No messages yet. Agent activity will appear here.
+            </p>
+          </div>
+        )}
 
-				{channel.messages.map((msg) => (
-					<div
-						key={msg.id}
-						className={[
-							"flex flex-col gap-1 max-w-[85%]",
-							msg.sender === "user"
-								? "self-end items-end"
-								: "self-start items-start",
-							msg.isHandRaise ? "border-l-2 border-yellow-500 pl-2" : "",
-						].join(" ")}
-					>
-						<span className="text-[10px] font-mono text-text-tertiary">
-							{msg.sender}
-						</span>
-						<div
-							className={[
-								"px-3 py-2 rounded-card text-sm leading-relaxed",
-								msg.sender === "user"
-									? "bg-accent/10 text-text-primary border border-accent/20"
-									: "bg-surface-raised text-text-primary border border-surface-border",
-								msg.isHandRaise ? "border-yellow-500/40" : "",
-							].join(" ")}
-						>
-							{msg.content}
-						</div>
-					</div>
-				))}
+        {channel.messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={[
+              "flex flex-col gap-1 max-w-[85%]",
+              msg.sender === "user"
+                ? "self-end items-end"
+                : "self-start items-start",
+              msg.isHandRaise ? "border-l-2 border-yellow-500 pl-2" : "",
+            ].join(" ")}
+          >
+            <span className="text-[10px] font-mono text-text-tertiary">
+              {msg.sender}
+            </span>
+            <div
+              className={[
+                "px-3 py-2 rounded-card text-sm leading-relaxed",
+                msg.sender === "user"
+                  ? "bg-accent/10 text-text-primary border border-accent/20"
+                  : "bg-surface-raised text-text-primary border border-surface-border",
+                msg.isHandRaise ? "border-yellow-500/40" : "",
+              ].join(" ")}
+            >
+              {msg.content}
+            </div>
+          </div>
+        ))}
 
-				<div ref={bottomRef} />
-			</div>
+        <div ref={bottomRef} />
+      </div>
 
-			{/* Reply input */}
-			<div className="border-t border-surface-border px-4 py-3 shrink-0">
-				<input
-					type="text"
-					placeholder="Reply to agent…"
-					className="w-full bg-surface-overlay text-text-primary text-sm px-3 py-2 rounded-card border border-surface-border placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 transition-colors duration-200 font-mono"
-				/>
-			</div>
-		</div>
-	);
+      {/* Reply input */}
+      <div className="border-t border-surface-border px-4 py-3 shrink-0">
+        <input
+          type="text"
+          placeholder="Reply to agent…"
+          className="w-full bg-surface-overlay text-text-primary text-sm px-3 py-2 rounded-card border border-surface-border placeholder:text-text-tertiary focus:outline-none focus:border-accent/60 transition-colors duration-200 font-mono"
+        />
+      </div>
+    </div>
+  );
 });
