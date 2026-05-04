@@ -1,0 +1,14 @@
+{
+  "name": "riza",
+  "version": "0.1.0",
+  "description": "Command your AI agents. You are the PM.",
+  "private": true,
+  "workspaces": [
+    "apps/desktop",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/desktop",
+    "build": "npm run build --workspace=apps/desktop"
+  }
+}

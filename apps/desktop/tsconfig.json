@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "outDir": "dist/renderer",
+    "baseUrl": ".",
+    "paths": {
+      "@riza/shared": ["../../packages/shared/src/index.ts"],
+      "@/*": ["src/renderer/*"]
+    }
+  },
+  "include": ["src/renderer/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

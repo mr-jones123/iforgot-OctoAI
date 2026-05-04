@@ -1,0 +1,22 @@
+node_modules
+dist
+.DS_Store
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.local
+
+# Pi agent cache
+.pi-lens/
+
+# Autoresearch session files
+autoresearch.jsonl
+autoresearch.ideas.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
