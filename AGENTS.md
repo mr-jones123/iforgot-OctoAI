@@ -20,7 +20,7 @@ The user is the PM. They assign tasks on a kanban board. They press play. Each c
 
 The market is crowded with multi-agent orchestrators (Baton, Parallel Code, Emdash, claude_agent_teams_ui, agentsmesh). They all solve "running agents in parallel." None solve "managing the human watching them."
 
-Riza's five core differentiators:
+Riza's seven core differentiators:
 
 1. **Review Column is a Hard Human Gate.** Every other tool moves cards to "done" on process exit. Riza never auto-advances past Review. The user must approve. This is the answer to AI slop: _"We don't automate trust. You shipped it, you own it."_
 
@@ -30,7 +30,11 @@ Riza's five core differentiators:
 
 4. **Task Dependency Linking with Cross-Card Context Injection.** Cards can declare dependencies. Card B is blocked until Card A is Done. When Card B starts, it automatically receives Card A's captured context (files changed, git diff, errors encountered, decisions made) in its prompt. Agents don't need to talk to each other. Context flows through SQLite, curated by the human.
 
-5. **Design That People Want to Screenshot.** Every competing tool looks like a developer built it for themselves. Riza has a real design system: zinc-950 base, single burnt orange accent (`#e85d2f`), Geist + Geist Mono, asymmetric layouts, motion physics, spotlight cards.
+5. **Cost Tracking Per Card.** Every card tracks how much it cost: token usage, API spend, duration. Parsed from PTY output per provider. The user sees at a glance which tasks were expensive, which provider was cheapest for which work type. No competing tool does this.
+
+6. **Design That People Want to Screenshot.** Every competing tool looks like a developer built it for themselves. Riza has a real design system: zinc-950 base, single burnt orange accent (`#e85d2f`), Geist + Geist Mono, asymmetric layouts, motion physics, spotlight cards.
+
+7. **All Execution is PTY-Based, Interactive.** Every card spawns a real terminal the user can type into. No batch mode, no subprocess invocations, no opaque black boxes. The user watches, intervenes, and redirects in real-time. The terminal IS the interface.
 
 When in doubt about a feature decision: optimize for **observability and human accountability**, not autonomy.
 
@@ -318,12 +322,13 @@ The recommended order:
 
 These are tracked in `docs/RIZA.md`. Highlights:
 
-- SQLite persistence (currently in-memory) — cards, card_events, card_context tables
+- SQLite persistence (currently in-memory) — cards, card_events, card_context, card_costs tables
 - Automatic context capture from PTY output (file edits, errors, test results)
 - Cross-card context injection when spawning dependent cards
+- Cost tracking per card (token usage, API spend, duration) parsed from PTY output
 - Git worktree integration (worktree per card, inline diff in Review)
 - Hand-raise detection from PTY output parsing
 - Approve/Reject buttons in Review column with merge/discard
 - App packaging + auto-update
 
-When picking up work, prefer the items that move us closer to the differentiated pitch (review gate, worktrees, context injection) over polish.
+When picking up work, prefer the items that move us closer to the differentiated pitch (review gate, worktrees, context injection, cost tracking, hand-raise) over polish.
