@@ -10,18 +10,30 @@
 import type { Workspace } from "@riza/shared";
 import { Board } from "../components/board/Board";
 import { Sidebar } from "../components/workspace/Sidebar";
+import { WorkspaceGate } from "../components/workspace/WorkSpaceGate";
 
 interface BoardPageProps {
-	workspace: Workspace;
+  workspace: Workspace;
 }
 
 export function BoardPage({ workspace }: BoardPageProps) {
-	return (
-		<div className="flex min-h-[100dvh] bg-[#09090b]">
-			<Sidebar workspace={workspace} />
-			<main className="flex-1 overflow-hidden">
-				<Board workspace={workspace} />
-			</main>
-		</div>
-	);
+  return (
+    <WorkspaceGate>
+      {({ sessions, activeSessionId, setActiveSessionId, createSession }) => (
+        <div className="flex min-h-[100dvh] bg-[#09090b]">
+          <Sidebar
+            workspace={workspace}
+            sessions={sessions}
+            activeSessionId={activeSessionId}
+            onSelectSession={(s) => setActiveSessionId(s.id)}
+            onCreateSession={createSession}
+          />
+
+          <main className="flex-1 overflow-hidden">
+            <Board workspace={workspace} />
+          </main>
+        </div>
+      )}
+    </WorkspaceGate>
+  );
 }
