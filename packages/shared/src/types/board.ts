@@ -10,6 +10,7 @@ export interface Column {
 export interface Board {
 	id: string;
 	workspaceId: string;
+	name: string; // session name, e.g. "Testing", "Coding"
 	columns: Column[];
 	createdAt: string;
 	updatedAt: string;

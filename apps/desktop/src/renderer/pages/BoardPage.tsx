@@ -1,39 +1,66 @@
 /**
- * BoardPage — the main workspace view.
+ * BoardPage — thin layout shell.
  *
- * Layout (DESIGN_VARIANCE 8 — asymmetric):
- *   Left rail (240px fixed): workspace nav + agent status summary
- *   Main area: horizontal kanban columns, horizontally scrollable
- *
- * TODO: wire to IPC for real board/card data
+ * All board/card state lives in App.tsx (keyed per workspace) and is passed
+ * down as props. BoardPage just wires Sidebar + KanbanBoard together.
  */
-import type { Workspace } from "@riza/shared";
-import { Board } from "../components/board/Board";
+import type { Board, Card, Workspace } from "@riza/shared";
+import { Board as KanbanBoard } from "../components/board/Board";
 import { Sidebar } from "../components/workspace/Sidebar";
-import { WorkspaceGate } from "../components/workspace/WorkSpaceGate";
 
-interface BoardPageProps {
-  workspace: Workspace;
+export interface BoardPageProps {
+	workspace: Workspace;
+	workspaces: Workspace[];
+	boards: Board[];
+	activeBoardId: string;
+	boardCards: Record<string, Card[]>;
+	onSwitchWorkspace: (id: string) => void;
+	onAddWorkspace: () => void;
+	onCreateBoard: (name: string) => void;
+	onDeleteBoard: (boardId: string) => void;
+	onSelectBoard: (boardId: string) => void;
+	onCardsChange: (boardId: string, updater: (prev: Card[]) => Card[]) => void;
 }
 
-export function BoardPage({ workspace }: BoardPageProps) {
-  return (
-    <WorkspaceGate>
-      {({ sessions, activeSessionId, setActiveSessionId, createSession }) => (
-        <div className="flex min-h-[100dvh] bg-[#09090b]">
-          <Sidebar
-            workspace={workspace}
-            sessions={sessions}
-            activeSessionId={activeSessionId}
-            onSelectSession={(s) => setActiveSessionId(s.id)}
-            onCreateSession={createSession}
-          />
+export function BoardPage({
+	workspace,
+	workspaces,
+	boards,
+	activeBoardId,
+	boardCards,
+	onSwitchWorkspace,
+	onAddWorkspace,
+	onCreateBoard,
+	onDeleteBoard,
+	onSelectBoard,
+	onCardsChange,
+}: BoardPageProps) {
+	const activeBoard = boards.find((b) => b.id === activeBoardId) ?? boards[0];
+	const activeCards = boardCards[activeBoard.id] ?? [];
 
-          <main className="flex-1 overflow-hidden">
-            <Board workspace={workspace} />
-          </main>
-        </div>
-      )}
-    </WorkspaceGate>
-  );
+	return (
+		<div className="flex min-h-[100dvh] bg-[#09090b]">
+			<Sidebar
+				workspace={workspace}
+				workspaces={workspaces}
+				boards={boards}
+				activeBoardId={activeBoard.id}
+				onSelectBoard={onSelectBoard}
+				onCreateBoard={onCreateBoard}
+				onDeleteBoard={onDeleteBoard}
+				onSwitchWorkspace={onSwitchWorkspace}
+				onAddWorkspace={onAddWorkspace}
+			/>
+
+			<main className="flex-1 overflow-hidden">
+				<KanbanBoard
+					key={activeBoard.id}
+					workspace={workspace}
+					board={activeBoard}
+					cards={activeCards}
+					onCardsChange={(updater) => onCardsChange(activeBoard.id, updater)}
+				/>
+			</main>
+		</div>
+	);
 }
