@@ -11,6 +11,9 @@
     "build": "npm run build:main && npm run build:renderer",
     "build:renderer": "vite build",
     "build:main": "node scripts/build-main.mjs",
+    "package": "npm run build && electron-builder",
+    "package:mac": "npm run build && electron-builder --mac",
+    "package:win": "npm run build && electron-builder --win",
     "preview": "electron .",
     "postinstall": "electron-rebuild -f -w node-pty,better-sqlite3"
   },
@@ -41,6 +44,7 @@
     "autoprefixer": "^10.4.0",
     "concurrently": "^9.0.0",
     "electron": "^31.0.0",
+    "electron-builder": "^26.8.1",
     "esbuild": "^0.21.5",
     "postcss": "^8.4.0",
     "tailwindcss": "^3.4.0",

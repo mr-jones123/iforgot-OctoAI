@@ -1,0 +1,36 @@
+appId: com.riza.desktop
+productName: Riza
+directories:
+  buildResources: resources
+  output: dist/release
+files:
+  - dist/main/**/*
+  - dist/renderer/**/*
+  - package.json
+  - "!node_modules/**/{test,tests,__tests__,spec}/**"
+  - "!node_modules/.cache"
+npmRebuild: true
+buildDependenciesFromSource: false
+nodeModulesPath: ../../node_modules
+mac:
+  icon: resources/icon.icns
+  category: public.app-category.developer-tools
+  target:
+    - dmg
+    - zip
+dmg:
+  contents:
+    - x: 130
+      "y": 220
+    - x: 410
+      "y": 220
+      type: link
+      path: /Applications
+win:
+  icon: resources/icon.ico
+  target:
+    - nsis
+linux:
+  icon: resources/icon.icns
+  target:
+    - AppImage
