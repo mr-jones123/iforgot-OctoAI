@@ -65,7 +65,7 @@ export function KanbanCard({
           <div className={`status-dot-${card.status}`} />
           {isWaiting && (
             <span className="text-[9px] font-mono text-yellow-500 uppercase tracking-widest">
-              needs you
+              Needs your action
             </span>
           )}
         </div>
