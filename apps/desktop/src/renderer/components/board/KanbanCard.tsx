@@ -12,6 +12,15 @@ interface KanbanCardProps {
   onDelete?: () => void;
 }
 
+// Extract just the task description from the assembled prompt
+function extractTaskPreview(description: string): string {
+  // Try to get content from <task> tags
+  const match = /<task>\n?([\s\S]*?)\n?<\/task>/.exec(description);
+  if (match?.[1]?.trim()) return match[1].trim();
+  // Fallback: return the raw description (pre-modal cards)
+  return description;
+}
+
 const PROVIDER_LABELS: Record<string, string> = {
   "claude-code": "Claude",
   codex: "Codex",
@@ -253,10 +262,10 @@ export function KanbanCard({
         {card.title}
       </p>
 
-      {/* Description preview */}
+      {/* Description preview — shows task text, not full prompt */}
       {card.description && (
         <p className="text-[11px] text-text-tertiary leading-relaxed line-clamp-2">
-          {card.description}
+          {extractTaskPreview(card.description)}
         </p>
       )}
 

@@ -16,6 +16,7 @@ import type { AgentProvider, Board, Card, Workspace } from "@riza/shared";
 import { useState } from "react";
 import { CardDetailPanel } from "./CardDetailPanel";
 import { CardModal } from "./CardModal";
+import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { TerminalPanel } from "../terminal/TerminalPanel";
 import { Column } from "./Column";
 import { KanbanCard } from "./KanbanCard";
@@ -36,6 +37,7 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
 	const [panelMode, setPanelMode] = useState<"detail" | "terminal">("detail");
 	const [activeCard, setActiveCard] = useState<Card | null>(null);
 	const [editingCard, setEditingCard] = useState<Card | null>(null);
+	const [deletingCard, setDeletingCard] = useState<Card | null>(null);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -166,41 +168,58 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
 
 	function deleteCard(cardId: string) {
 		const card = cards.find((c) => c.id === cardId);
-		if (card && (card.status === "running" || card.status === "waiting")) {
+		if (!card) return;
+		const dependents = cards.filter((c) => c.dependsOn.includes(cardId));
+		if (dependents.length > 0) {
+			setDeletingCard(card);
+			return;
+		}
+		// No dependents — delete directly
+		if (card.status === "running" || card.status === "waiting") {
 			window.riza?.agent.kill(cardId);
 		}
 		if (openCardId === cardId) setOpenCardId(null);
 		if (editingCard?.id === cardId) setEditingCard(null);
+		onCardsChange((prev) => prev.filter((c) => c.id !== cardId));
+	}
 
-		// Find cards that depend on this one
+	function deleteCardCascade(cardId: string) {
+		const card = cards.find((c) => c.id === cardId);
+		if (!card) return;
 		const dependents = cards.filter((c) => c.dependsOn.includes(cardId));
 		const idsToDelete = new Set([cardId]);
-		if (dependents.length > 0) {
-			const confirmed = window.confirm(
-				`${dependents.length} card${dependents.length > 1 ? "s depend" : " depends"} on "${card?.title ?? "this task"}". Delete them too?\n\n${dependents.map((d) => "- " + d.title).join("\n")}`,
-			);
-			if (confirmed) {
-				for (const dep of dependents) {
-					if (dep.status === "running" || dep.status === "waiting") {
-						window.riza?.agent.kill(dep.id);
-					}
-					idsToDelete.add(dep.id);
-				}
-			} else {
-				// Only delete the original, remove the dep reference from dependents
-				onCardsChange((prev) =>
-					prev
-						.filter((c) => c.id !== cardId)
-						.map((c) => ({
-							...c,
-							dependsOn: c.dependsOn.filter((id) => id !== cardId),
-						})),
-				);
-				return;
+		for (const dep of dependents) {
+			if (dep.status === "running" || dep.status === "waiting") {
+				window.riza?.agent.kill(dep.id);
 			}
+			idsToDelete.add(dep.id);
 		}
-
+		if (card.status === "running" || card.status === "waiting") {
+			window.riza?.agent.kill(cardId);
+		}
+		if (openCardId && idsToDelete.has(openCardId)) setOpenCardId(null);
+		if (editingCard && idsToDelete.has(editingCard.id)) setEditingCard(null);
 		onCardsChange((prev) => prev.filter((c) => !idsToDelete.has(c.id)));
+		setDeletingCard(null);
+	}
+
+	function deleteCardOnly(cardId: string) {
+		const card = cards.find((c) => c.id === cardId);
+		if (!card) return;
+		if (card.status === "running" || card.status === "waiting") {
+			window.riza?.agent.kill(cardId);
+		}
+		if (openCardId === cardId) setOpenCardId(null);
+		if (editingCard?.id === cardId) setEditingCard(null);
+		onCardsChange((prev) =>
+			prev
+				.filter((c) => c.id !== cardId)
+				.map((c) => ({
+					...c,
+					dependsOn: c.dependsOn.filter((id) => id !== cardId),
+				})),
+		);
+		setDeletingCard(null);
 	}
 
 	function playCard(cardId: string) {
@@ -346,6 +365,17 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
 						setEditingCard(null);
 					}}
 					onCancel={() => setEditingCard(null)}
+				/>
+			)}
+
+			{/* Delete confirmation — when card has dependents */}
+			{deletingCard && (
+				<DeleteConfirmModal
+					card={deletingCard}
+					dependents={cards.filter((c) => c.dependsOn.includes(deletingCard.id))}
+					onConfirmCascade={() => deleteCardCascade(deletingCard.id)}
+					onConfirmOnlyThis={() => deleteCardOnly(deletingCard.id)}
+					onCancel={() => setDeletingCard(null)}
 				/>
 			)}
 
