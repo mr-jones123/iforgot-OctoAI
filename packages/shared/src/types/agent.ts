@@ -1,9 +1,8 @@
-export type AgentProvider = "claude-code" | "codex" | "gemini" | "ollama";
+export type AgentProvider = "claude-code" | "codex" | "gemini" | "amp";
 
 export interface AgentConfig {
 	provider: AgentProvider;
-	model?: string; // e.g. "claude-sonnet-4-5", "gpt-4o", "gemini-2.0-flash"
-	ollamaModel?: string; // only for ollama provider
+	model?: string; // e.g. "claude-sonnet-4-5", "gpt-4o", "gemini-2.0-flash", "anthropic/claude-sonnet-4"
 }
 
 export interface AgentStatus {
@@ -21,5 +20,5 @@ export const AGENT_COMMANDS: Record<AgentProvider, string> = {
 	"claude-code": "claude",
 	codex: "codex",
 	gemini: "gemini",
-	ollama: "ollama",
+	amp: "amp",
 };

@@ -10,6 +10,7 @@ interface RizaAPI {
 			description: string;
 			worktreePath: string;
 			model?: string;
+			dependsOn?: string[];
 		}) => Promise<void>;
 		kill: (cardId: string) => Promise<void>;
 		onStatus: (
@@ -19,6 +20,11 @@ interface RizaAPI {
 				raisedHand: boolean;
 			}) => void,
 		) => () => void;
+		checkInstalled: (provider: string) => Promise<{
+			installed: boolean;
+			command: string;
+			hint: string;
+		}>;
 	};
 	terminal: {
 		input: (cardId: string, data: string) => void;

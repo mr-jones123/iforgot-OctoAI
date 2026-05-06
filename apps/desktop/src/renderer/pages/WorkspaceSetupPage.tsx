@@ -13,7 +13,7 @@ const PROVIDERS: { id: AgentProvider; label: string; hint: string }[] = [
   { id: "claude-code", label: "Claude Code", hint: "claude" },
   { id: "codex", label: "Codex", hint: "codex" },
   { id: "gemini", label: "Gemini CLI", hint: "gemini" },
-  { id: "ollama", label: "Ollama", hint: "ollama" },
+  { id: "amp", label: "Amp", hint: "amp" },
 ];
 
 export function WorkspaceSetupPage({

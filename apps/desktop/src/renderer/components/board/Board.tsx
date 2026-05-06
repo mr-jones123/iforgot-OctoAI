@@ -14,6 +14,9 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import type { AgentProvider, Board, Card, Workspace } from "@riza/shared";
 import { useState } from "react";
+import { CardDetailPanel } from "./CardDetailPanel";
+import { CardModal } from "./CardModal";
+import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { TerminalPanel } from "../terminal/TerminalPanel";
 import { Column } from "./Column";
 import { KanbanCard } from "./KanbanCard";
@@ -31,7 +34,10 @@ function makeId() {
 
 export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
   const [openCardId, setOpenCardId] = useState<string | null>(null);
+  const [panelMode, setPanelMode] = useState<"detail" | "terminal">("detail");
   const [activeCard, setActiveCard] = useState<Card | null>(null);
+  const [editingCard, setEditingCard] = useState<Card | null>(null);
+  const [deletingCard, setDeletingCard] = useState<Card | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -117,6 +123,7 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
     description: string,
     prompt: string,
     provider: AgentProvider,
+    dependsOn: string[] = [],
   ) {
     onCardsChange((prev) => [
       ...prev,
@@ -132,7 +139,7 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
         status: "idle",
         raisedHand: false,
         order: prev.filter((c) => c.columnId === columnId).length,
-        dependsOn: [],
+        dependsOn,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
@@ -145,6 +152,7 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
     description: string,
     prompt: string,
     provider: AgentProvider,
+    dependsOn: string[],
   ) {
     onCardsChange((prev) =>
       prev.map((c) =>
@@ -155,6 +163,7 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
               description,
               prompt,
               agent: { ...c.agent, provider },
+              dependsOn,
               updatedAt: new Date().toISOString(),
             }
           : c,
@@ -164,11 +173,57 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
 
   function deleteCard(cardId: string) {
     const card = cards.find((c) => c.id === cardId);
-    if (card && (card.status === "running" || card.status === "waiting")) {
+    if (!card) return;
+    const dependents = cards.filter((c) => c.dependsOn.includes(cardId));
+    if (dependents.length > 0) {
+      setDeletingCard(card);
+      return;
+    }
+    if (card.status === "running" || card.status === "waiting") {
       window.riza?.agent.kill(cardId);
     }
     if (openCardId === cardId) setOpenCardId(null);
+    if (editingCard?.id === cardId) setEditingCard(null);
     onCardsChange((prev) => prev.filter((c) => c.id !== cardId));
+  }
+
+  function deleteCardCascade(cardId: string) {
+    const card = cards.find((c) => c.id === cardId);
+    if (!card) return;
+    const dependents = cards.filter((c) => c.dependsOn.includes(cardId));
+    const idsToDelete = new Set([cardId]);
+    for (const dep of dependents) {
+      if (dep.status === "running" || dep.status === "waiting") {
+        window.riza?.agent.kill(dep.id);
+      }
+      idsToDelete.add(dep.id);
+    }
+    if (card.status === "running" || card.status === "waiting") {
+      window.riza?.agent.kill(cardId);
+    }
+    if (openCardId && idsToDelete.has(openCardId)) setOpenCardId(null);
+    if (editingCard && idsToDelete.has(editingCard.id)) setEditingCard(null);
+    onCardsChange((prev) => prev.filter((c) => !idsToDelete.has(c.id)));
+    setDeletingCard(null);
+  }
+
+  function deleteCardOnly(cardId: string) {
+    const card = cards.find((c) => c.id === cardId);
+    if (!card) return;
+    if (card.status === "running" || card.status === "waiting") {
+      window.riza?.agent.kill(cardId);
+    }
+    if (openCardId === cardId) setOpenCardId(null);
+    if (editingCard?.id === cardId) setEditingCard(null);
+    onCardsChange((prev) =>
+      prev
+        .filter((c) => c.id !== cardId)
+        .map((c) => ({
+          ...c,
+          dependsOn: c.dependsOn.filter((id) => id !== cardId),
+        })),
+    );
+    setDeletingCard(null);
   }
 
   function playCard(cardId: string) {
@@ -181,6 +236,8 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
           : c,
       ),
     );
+    setOpenCardId(cardId);
+    setPanelMode("terminal");
     window.riza?.agent
       .spawn({
         cardId,
@@ -263,16 +320,26 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
               cards={cards
                 .filter((c) => c.columnId === col.id)
                 .sort((a, b) => a.order - b.order)}
+              allCards={cards}
               blockedCardIds={blockedCardIds}
-              onAddCard={(title, desc, prompt, provider) =>
-                addCard(col.id, title, desc, prompt, provider)
+              onAddCard={(title, desc, prompt, provider, dependsOn) =>
+                addCard(col.id, title, desc, prompt, provider, dependsOn)
               }
               onEditCard={editCard}
+              onOpenEditModal={setEditingCard}
               onDeleteCard={deleteCard}
               onRunAll={() => runAll(col.id)}
               onPlayCard={playCard}
               onStopCard={stopCard}
-              onOpenCard={setOpenCardId}
+              onOpenCard={(cardId: string) => {
+                const c = cards.find((x) => x.id === cardId);
+                setOpenCardId(cardId);
+                setPanelMode(
+                  c && (c.status === "running" || c.status === "waiting")
+                    ? "terminal"
+                    : "detail",
+                );
+              }}
             />
           ))}
         </div>
@@ -295,8 +362,56 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
         ) : null}
       </DragOverlay>
 
-      {/* Terminal panel */}
-      {openCard && (
+      {/* Edit modal */}
+      {editingCard && (
+        <CardModal
+          columnId={editingCard.columnId}
+          allCards={cards}
+          existing={editingCard}
+          onConfirm={(title, description, prompt, provider, dependsOn) => {
+            editCard(
+              editingCard.id,
+              title,
+              description,
+              prompt,
+              provider,
+              dependsOn,
+            );
+            setEditingCard(null);
+          }}
+          onCancel={() => setEditingCard(null)}
+        />
+      )}
+
+      {/* Delete confirmation */}
+      {deletingCard && (
+        <DeleteConfirmModal
+          card={deletingCard}
+          dependents={cards.filter((c) =>
+            c.dependsOn.includes(deletingCard.id),
+          )}
+          onConfirmCascade={() => deleteCardCascade(deletingCard.id)}
+          onConfirmOnlyThis={() => deleteCardOnly(deletingCard.id)}
+          onCancel={() => setDeletingCard(null)}
+        />
+      )}
+
+      {/* Side panel — detail or terminal */}
+      {openCard && panelMode === "detail" && (
+        <CardDetailPanel
+          card={openCard}
+          allCards={cards}
+          isOpen={true}
+          onClose={() => setOpenCardId(null)}
+          onEdit={() => setEditingCard(openCard)}
+          onPlay={() => playCard(openCard.id)}
+          onStop={() => stopCard(openCard.id)}
+          onViewTerminal={() => setPanelMode("terminal")}
+          isBlocked={blockedCardIds.has(openCard.id)}
+        />
+      )}
+
+      {openCard && panelMode === "terminal" && (
         <TerminalPanel
           card={openCard}
           isOpen={true}

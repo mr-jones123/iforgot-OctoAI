@@ -11,12 +11,14 @@ import { SortableCard } from "./SortableCard";
 interface ColumnProps {
   column: ColumnType;
   cards: Card[];
+  allCards: Card[];
   onRunAll?: () => void;
   onAddCard: (
     title: string,
     description: string,
     prompt: string,
     provider: AgentProvider,
+    dependsOn: string[],
   ) => void;
   onEditCard: (
     cardId: string,
@@ -24,8 +26,10 @@ interface ColumnProps {
     description: string,
     prompt: string,
     provider: AgentProvider,
+    dependsOn: string[],
   ) => void;
   onDeleteCard: (cardId: string) => void;
+  onOpenEditModal: (card: Card) => void;
   onPlayCard: (cardId: string) => void;
   onStopCard: (cardId: string) => void;
   onOpenCard: (cardId: string) => void;
@@ -35,17 +39,18 @@ interface ColumnProps {
 export function Column({
   column,
   cards,
+  allCards,
   onRunAll,
   onAddCard,
   onEditCard,
   onDeleteCard,
+  onOpenEditModal,
   onPlayCard,
   onStopCard,
   onOpenCard,
   blockedCardIds,
 }: ColumnProps) {
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingCard, setEditingCard] = useState<Card | null>(null);
 
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
@@ -145,7 +150,7 @@ export function Column({
                   onPlay={() => onPlayCard(card.id)}
                   onStop={() => onStopCard(card.id)}
                   onOpen={() => onOpenCard(card.id)}
-                  onEdit={() => setEditingCard(card)}
+                  onEdit={() => onOpenEditModal(card)}
                   onDelete={() => onDeleteCard(card.id)}
                 />
               ))
@@ -158,8 +163,9 @@ export function Column({
       {showAddModal && (
         <CardModal
           columnId={column.id}
-          onConfirm={(title, description, prompt, provider) => {
-            onAddCard(title, description, prompt, provider);
+          allCards={allCards}
+          onConfirm={(title, description, prompt, provider, dependsOn) => {
+            onAddCard(title, description, prompt, provider, dependsOn);
             setShowAddModal(false);
           }}
           onCancel={() => setShowAddModal(false)}
