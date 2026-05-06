@@ -11,7 +11,11 @@ files:
   - "!node_modules/.cache"
 npmRebuild: true
 buildDependenciesFromSource: false
-nodeModulesPath: ../../node_modules
+extraResources:
+  - from: ../../node_modules/node-pty
+    to: node_modules/node-pty
+  - from: ../../node_modules/better-sqlite3
+    to: node_modules/better-sqlite3
 mac:
   icon: resources/icon.icns
   category: public.app-category.developer-tools
