@@ -41,6 +41,27 @@ packages/shared/  TypeScript types shared between main + renderer
 docs/             Architecture decisions and notes
 ```
 
+## Download & Install
+
+Download the latest release from [GitHub Releases](https://github.com/mr-jones123/OctoAI/releases/latest).
+
+### macOS Users — Gatekeeper Warning
+
+The app is not signed with an Apple Developer certificate, so macOS will show a warning: **"cannot be opened because it may be malware."** This is expected. The app is safe.
+
+To open it:
+
+1. Right-click the `.dmg` → **Open**
+2. Drag Riza to **Applications**
+3. Right-click Riza in Applications → **Open**
+4. Click **Open** on the Gatekeeper dialog
+
+Or from the terminal:
+
+```bash
+xattr -cr /Applications/Riza.app
+```
+
 ## MVP Build Order
 
 1. Workspace creation + git worktree init
