@@ -42,7 +42,6 @@ export function Column({
   allCards,
   onRunAll,
   onAddCard,
-  onEditCard,
   onDeleteCard,
   onOpenEditModal,
   onPlayCard,
@@ -169,19 +168,6 @@ export function Column({
             setShowAddModal(false);
           }}
           onCancel={() => setShowAddModal(false)}
-        />
-      )}
-
-      {/* Edit modal */}
-      {editingCard && (
-        <CardModal
-          columnId={column.id}
-          existing={editingCard}
-          onConfirm={(title, description, prompt, provider) => {
-            onEditCard(editingCard.id, title, description, prompt, provider);
-            setEditingCard(null);
-          }}
-          onCancel={() => setEditingCard(null)}
         />
       )}
     </>
