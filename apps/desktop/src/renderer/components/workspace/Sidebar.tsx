@@ -50,9 +50,15 @@ export function Sidebar({
     <aside className="w-[240px] shrink-0 flex flex-col border-r border-surface-border min-h-[100dvh] px-4 py-5 gap-5">
       {/* Wordmark */}
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold tracking-tighter text-text-primary">
-          Riza
-        </span>
+        <div className="flex items-center gap-x-2">
+          <span className="text-sm font-semibold tracking-tighter text-text-primary">
+            <img
+              src="./logo_text.png"
+              alt="logo"
+              className="h-5 w-auto object-contain"
+            />
+          </span>
+        </div>
       </div>
 
       {/* ── Workspaces ──────────────────────────────────────────────────────── */}
