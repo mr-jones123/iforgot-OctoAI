@@ -92,7 +92,13 @@ function parseDescription(description: string) {
   if (description.includes("high-priority")) priority = "high";
   else if (description.includes("medium-priority")) priority = "medium";
 
-  return { goal, acceptanceCriteria, context, priority, systemInstruction };
+  return {
+    goal,
+    acceptanceCriteria,
+    context,
+    priority,
+    systemInstruction,
+  };
 }
 
 function extractXmlSection(text: string, tag: string): string | undefined {
@@ -108,8 +114,10 @@ interface CardModalProps {
   onConfirm: (
     title: string,
     description: string,
+    prompt: string,
     provider: AgentProvider,
   ) => void;
+
   onCancel: () => void;
 }
 
@@ -120,6 +128,8 @@ export function CardModal({ existing, onConfirm, onCancel }: CardModalProps) {
 
   const [tab, setTab] = useState<Tab>("ticket");
   const [title, setTitle] = useState(existing?.title ?? "");
+  const [description, setDescription] = useState(existing?.description ?? "");
+
   const [goal, setGoal] = useState(parsed?.goal ?? "");
   const [acceptanceCriteria, setAcceptanceCriteria] = useState(
     parsed?.acceptanceCriteria ?? "",
@@ -167,7 +177,7 @@ export function CardModal({ existing, onConfirm, onCancel }: CardModalProps) {
       setTitleError(true);
       return;
     }
-    onConfirm(title.trim(), prompt, provider);
+    onConfirm(title.trim(), description.trim(), prompt, provider);
   }
 
   function handleCopy() {
@@ -274,6 +284,23 @@ export function CardModal({ existing, onConfirm, onCancel }: CardModalProps) {
                     Title is required.
                   </p>
                 )}
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-mono text-text-tertiary uppercase tracking-widest">
+                  Description
+                </label>
+                <p className="text-[11px] text-text-tertiary -mt-1">
+                  Short summary shown on the card. Not sent to the agent.
+                </p>
+                <input
+                  type="text"
+                  maxLength={160}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Add JWT auth with refresh tokens to the user service."
+                  className="bg-surface-overlay border border-surface-border rounded-card px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary font-sans focus:outline-none focus:border-accent/60 transition-colors duration-200"
+                />
               </div>
 
               {/* ── NEW: System instruction (editable) ── */}

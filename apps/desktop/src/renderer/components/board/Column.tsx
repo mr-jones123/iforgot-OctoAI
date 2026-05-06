@@ -15,12 +15,14 @@ interface ColumnProps {
   onAddCard: (
     title: string,
     description: string,
+    prompt: string,
     provider: AgentProvider,
   ) => void;
   onEditCard: (
     cardId: string,
     title: string,
     description: string,
+    prompt: string,
     provider: AgentProvider,
   ) => void;
   onDeleteCard: (cardId: string) => void;
@@ -156,8 +158,8 @@ export function Column({
       {showAddModal && (
         <CardModal
           columnId={column.id}
-          onConfirm={(title, description, provider) => {
-            onAddCard(title, description, provider);
+          onConfirm={(title, description, prompt, provider) => {
+            onAddCard(title, description, prompt, provider);
             setShowAddModal(false);
           }}
           onCancel={() => setShowAddModal(false)}
@@ -169,8 +171,8 @@ export function Column({
         <CardModal
           columnId={column.id}
           existing={editingCard}
-          onConfirm={(title, description, provider) => {
-            onEditCard(editingCard.id, title, description, provider);
+          onConfirm={(title, description, prompt, provider) => {
+            onEditCard(editingCard.id, title, description, prompt, provider);
             setEditingCard(null);
           }}
           onCancel={() => setEditingCard(null)}
