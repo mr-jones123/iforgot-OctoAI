@@ -27,6 +27,7 @@ interface ColumnProps {
     dependsOn: string[],
   ) => void;
   onDeleteCard: (cardId: string) => void;
+  onOpenEditModal: (card: Card) => void;
   onPlayCard: (cardId: string) => void;
   onStopCard: (cardId: string) => void;
   onOpenCard: (cardId: string) => void;
@@ -41,13 +42,13 @@ export function Column({
   onAddCard,
   onEditCard,
   onDeleteCard,
+  onOpenEditModal,
   onPlayCard,
   onStopCard,
   onOpenCard,
   blockedCardIds,
 }: ColumnProps) {
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingCard, setEditingCard] = useState<Card | null>(null);
 
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
@@ -147,7 +148,7 @@ export function Column({
                   onPlay={() => onPlayCard(card.id)}
                   onStop={() => onStopCard(card.id)}
                   onOpen={() => onOpenCard(card.id)}
-                  onEdit={() => setEditingCard(card)}
+                  onEdit={() => onOpenEditModal(card)}
                   onDelete={() => onDeleteCard(card.id)}
                 />
               ))
@@ -169,19 +170,7 @@ export function Column({
         />
       )}
 
-      {/* Edit modal */}
-      {editingCard && (
-        <CardModal
-          columnId={column.id}
-          allCards={allCards}
-          existing={editingCard}
-          onConfirm={(title, description, provider, dependsOn) => {
-            onEditCard(editingCard.id, title, description, provider, dependsOn);
-            setEditingCard(null);
-          }}
-          onCancel={() => setEditingCard(null)}
-        />
-      )}
+
     </>
   );
 }
