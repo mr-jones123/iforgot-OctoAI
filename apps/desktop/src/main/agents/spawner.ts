@@ -1,5 +1,6 @@
-import type { AgentProvider } from "@riza/shared";
+import { AGENT_COMMANDS, type AgentProvider } from "@riza/shared";
 import { BrowserWindow } from "electron";
+import { execSync } from "node:child_process";
 import type { IDisposable, IPty } from "node-pty";
 import * as pty from "node-pty";
 
@@ -12,6 +13,36 @@ interface Session {
 
 const sessions = new Map<string, Session>();
 const MAX_BUFFER = 2000; // max chunks to keep
+
+// Install hints for each provider — shown when CLI is not found
+const INSTALL_HINTS: Record<string, string> = {
+	"claude-code": "npm install -g @anthropic-ai/claude-code",
+	codex: "npm install -g @openai/codex",
+	gemini: "npm install -g @anthropic-ai/gemini",
+	amp: "npm install -g @sourcegraph/amp",
+};
+
+function isCommandAvailable(cmd: string): boolean {
+	try {
+		execSync(`command -v ${cmd}`, { stdio: "ignore" });
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+export function checkProviderInstalled(provider: AgentProvider): {
+	installed: boolean;
+	command: string;
+	hint: string;
+} {
+	const cmd = AGENT_COMMANDS[provider];
+	return {
+		installed: isCommandAvailable(cmd),
+		command: cmd,
+		hint: INSTALL_HINTS[provider] ?? `Install ${cmd} and add it to your PATH`,
+	};
+}
 
 function buildCommand(
 	provider: AgentProvider,
@@ -42,12 +73,14 @@ function buildCommand(
 				args: ["--prompt-interactive", description, "--yolo", "--skip-trust"],
 				injectStdin: false,
 			};
-		case "ollama":
-			// ollama run drops into an interactive chat — inject task via stdin after boot
+		case "amp":
+			// Amp by Sourcegraph — interactive TUI with positional prompt arg.
+			// Also supports: amp -x "prompt" for non-interactive execute mode.
+			// Docs: https://ampcode.com/manual
 			return {
-				cmd: "ollama",
-				args: ["run", model ?? "llama3"],
-				injectStdin: true,
+				cmd: "amp",
+				args: [description],
+				injectStdin: false,
 			};
 	}
 }
@@ -71,8 +104,51 @@ const BOOT_DELAY_MS: Record<AgentProvider, number> = {
 	"claude-code": 3000,
 	codex: 2000,
 	gemini: 2000,
-	ollama: 1000,
+	amp: 3000,
 };
+
+
+// ── Context injection helpers ──────────────────────────────────────────────
+
+// Strip ANSI escape sequences from terminal output
+function stripAnsi(text: string): string {
+	// eslint-disable-next-line no-control-regex
+	return text.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "");
+}
+
+// Extract the last N meaningful lines from a terminal buffer
+function extractBufferTail(buffer: string[], maxLines: number = 50): string {
+	const allText = buffer.join("");
+	const cleaned = stripAnsi(allText);
+	const lines = cleaned.split("\n").filter((l) => l.trim().length > 0);
+	return lines.slice(-maxLines).join("\n");
+}
+
+// Build context preamble from dependency card terminal buffers
+function buildContextPreamble(dependsOn: string[]): string {
+	const blocks: string[] = [];
+
+	for (const depId of dependsOn) {
+		const session = sessions.get(depId);
+		if (!session || session.buffer.length === 0) continue;
+
+		const tail = extractBufferTail(session.buffer, 50);
+		if (!tail) continue;
+
+		blocks.push(
+			`[Context from completed task: ${depId}]\n` +
+			`Terminal output (last 50 lines):\n${tail}`,
+		);
+	}
+
+	if (blocks.length === 0) return "";
+
+	return (
+		"The following context is from previously completed tasks that this task depends on. " +
+		"Use this information to understand what was already done.\n\n" +
+		blocks.join("\n\n---\n\n")
+	);
+}
 
 export function spawnAgent(
 	cardId: string,
@@ -80,6 +156,7 @@ export function spawnAgent(
 	description: string,
 	worktreePath: string,
 	model?: string,
+	dependsOn?: string[],
 ): void {
 	console.log(
 		`[spawner] spawnAgent called: cardId=${cardId} provider=${provider} cwd=${worktreePath}`,
@@ -93,7 +170,38 @@ export function spawnAgent(
 		return;
 	}
 
-	const { cmd, args, injectStdin } = buildCommand(provider, description, model);
+	// Build context preamble from dependency cards
+	let enrichedDescription = description;
+	if (dependsOn && dependsOn.length > 0) {
+		const preamble = buildContextPreamble(dependsOn);
+		if (preamble) {
+			enrichedDescription = preamble + "\n\n---\n\n" + description;
+		}
+	}
+
+	// Pre-flight: check if the CLI is installed
+	const check = checkProviderInstalled(provider);
+	if (!check.installed) {
+		console.error(`[spawner] ${check.command} not found on PATH`);
+		const errText =
+			`\x1b[31m[riza] '${check.command}' is not installed or not in your PATH.\r\n` +
+			`\x1b[33m[riza] Install it with: ${check.hint}\x1b[0m`;
+		const errorSession: Session = {
+			pty: null as never,
+			dataListener: null as never,
+			buffer: [errText],
+		};
+		sessions.set(cardId, errorSession);
+		sendToTerminal(cardId, errText);
+		getWin()?.webContents.send("agent:status", {
+			cardId,
+			state: "failed",
+			raisedHand: false,
+		});
+		return;
+	}
+
+	const { cmd, args, injectStdin } = buildCommand(provider, enrichedDescription, model);
 
 	console.log(
 		`[spawner] full command: ${cmd} ${args.map((a) => `"${a.slice(0, 80)}"`).join(" ")}`,
@@ -164,7 +272,7 @@ export function spawnAgent(
 	});
 	session.dataListener = dataListener;
 
-	// For providers that don't support a prompt arg (ollama),
+	// For providers that don't support a prompt arg,
 	// inject the task via stdin after a short boot delay.
 	if (injectStdin && description.trim()) {
 		const delay = BOOT_DELAY_MS[provider] ?? 2000;

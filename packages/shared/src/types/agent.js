@@ -6,5 +6,5 @@ exports.AGENT_COMMANDS = {
     "claude-code": "claude",
     codex: "codex",
     gemini: "gemini",
-    ollama: "ollama",
+    amp: "amp",
 };

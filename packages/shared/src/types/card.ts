@@ -10,7 +10,6 @@ export interface Card {
 	description: string; // the task prompt sent to the agent
 	agent: AgentConfig;
 	worktreePath?: string; // set when agent is spawned
-	channelId: string; // associated Slack-style message channel
 	status: CardStatus;
 	raisedHand: boolean; // agent is blocked and needs human attention
 	order: number;
