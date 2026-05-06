@@ -20,6 +20,11 @@ interface RizaAPI {
 				raisedHand: boolean;
 			}) => void,
 		) => () => void;
+		checkInstalled: (provider: string) => Promise<{
+			installed: boolean;
+			command: string;
+			hint: string;
+		}>;
 	};
 	terminal: {
 		input: (cardId: string, data: string) => void;

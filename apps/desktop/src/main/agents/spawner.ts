@@ -1,5 +1,6 @@
-import type { AgentProvider } from "@riza/shared";
+import { AGENT_COMMANDS, type AgentProvider } from "@riza/shared";
 import { BrowserWindow } from "electron";
+import { execSync } from "node:child_process";
 import type { IDisposable, IPty } from "node-pty";
 import * as pty from "node-pty";
 
@@ -12,6 +13,36 @@ interface Session {
 
 const sessions = new Map<string, Session>();
 const MAX_BUFFER = 2000; // max chunks to keep
+
+// Install hints for each provider — shown when CLI is not found
+const INSTALL_HINTS: Record<string, string> = {
+	"claude-code": "npm install -g @anthropic-ai/claude-code",
+	codex: "npm install -g @openai/codex",
+	gemini: "npm install -g @anthropic-ai/gemini",
+	amp: "npm install -g @sourcegraph/amp",
+};
+
+function isCommandAvailable(cmd: string): boolean {
+	try {
+		execSync(`command -v ${cmd}`, { stdio: "ignore" });
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+export function checkProviderInstalled(provider: AgentProvider): {
+	installed: boolean;
+	command: string;
+	hint: string;
+} {
+	const cmd = AGENT_COMMANDS[provider];
+	return {
+		installed: isCommandAvailable(cmd),
+		command: cmd,
+		hint: INSTALL_HINTS[provider] ?? `Install ${cmd} and add it to your PATH`,
+	};
+}
 
 function buildCommand(
 	provider: AgentProvider,
@@ -146,6 +177,28 @@ export function spawnAgent(
 		if (preamble) {
 			enrichedDescription = preamble + "\n\n---\n\n" + description;
 		}
+	}
+
+	// Pre-flight: check if the CLI is installed
+	const check = checkProviderInstalled(provider);
+	if (!check.installed) {
+		console.error(`[spawner] ${check.command} not found on PATH`);
+		const errText =
+			`\x1b[31m[riza] '${check.command}' is not installed or not in your PATH.\r\n` +
+			`\x1b[33m[riza] Install it with: ${check.hint}\x1b[0m`;
+		const errorSession: Session = {
+			pty: null as never,
+			dataListener: null as never,
+			buffer: [errText],
+		};
+		sessions.set(cardId, errorSession);
+		sendToTerminal(cardId, errText);
+		getWin()?.webContents.send("agent:status", {
+			cardId,
+			state: "failed",
+			raisedHand: false,
+		});
+		return;
 	}
 
 	const { cmd, args, injectStdin } = buildCommand(provider, enrichedDescription, model);

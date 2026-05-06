@@ -1,5 +1,5 @@
 import type { Card } from "@riza/shared";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 interface KanbanCardProps {
@@ -38,6 +38,24 @@ export function KanbanCard({
   onDelete,
 }: KanbanCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const [notInstalled, setNotInstalled] = useState<string | null>(null);
+
+  // Check if the agent CLI is installed (only for idle cards)
+  useEffect(() => {
+    if (card.status !== "idle") {
+      setNotInstalled(null);
+      return;
+    }
+    let cancelled = false;
+    window.riza?.agent.checkInstalled(card.agent.provider).then((result) => {
+      if (!cancelled && !result.installed) {
+        setNotInstalled(result.hint);
+      } else if (!cancelled) {
+        setNotInstalled(null);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [card.agent.provider, card.status]);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
@@ -92,10 +110,10 @@ export function KanbanCard({
                 e.stopPropagation();
                 isActive ? onStop?.() : onPlay?.();
               }}
-              disabled={isBlocked}
+              disabled={isBlocked || !!notInstalled}
               className={[
                 "w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all duration-150 active:scale-90",
-                isBlocked
+                isBlocked || notInstalled
                   ? "opacity-30 cursor-not-allowed border border-surface-border"
                   : isActive
                     ? "bg-surface-overlay border border-surface-border hover:border-red-500/60 hover:text-red-400 text-text-tertiary"
@@ -267,6 +285,18 @@ export function KanbanCard({
         <p className="text-[11px] text-text-tertiary leading-relaxed line-clamp-2">
           {extractTaskPreview(card.description)}
         </p>
+      )}
+
+      {/* Not installed warning */}
+      {notInstalled && card.status === "idle" && (
+        <div className="flex items-center gap-1.5 mt-1.5 px-2 py-1.5 rounded bg-yellow-500/10 border border-yellow-500/20">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#f59e0b" strokeWidth="1.2">
+            <path d="M5 2 V5.5 M5 7.5 V7.5" strokeLinecap="round" />
+          </svg>
+          <span className="text-[9px] font-mono text-yellow-400 truncate">
+            {notInstalled}
+          </span>
+        </div>
       )}
 
       {/* Blocked footer */}
