@@ -34,13 +34,14 @@ function assemblePrompt(
   acceptanceCriteria: string,
   context: string,
   priority: Priority,
-  systemInstruction: string, // new parameter
+  systemInstruction: string,
 ): string {
   const sections: string[] = [];
 
-  // Use custom instruction if provided, otherwise default
   const instruction = systemInstruction.trim() || DEFAULT_SYSTEM_INSTRUCTION;
-  sections.push(`${instruction} ${PRIORITY_INSTRUCTION[priority]}`);
+  sections.push(
+    `<system_instruction>\n${instruction} ${PRIORITY_INSTRUCTION[priority]}\n</system_instruction>`,
+  );
 
   if (goal) {
     sections.push(`<task>\n${goal}\n</task>`);
@@ -79,7 +80,10 @@ function assemblePrompt(
 function parseDescription(description: string) {
   const systemInstruction =
     extractXmlSection(description, "system_instruction") ?? "";
-  const goal = extractXmlSection(description, "task") ?? description;
+  const extractedGoal = extractXmlSection(description, "task");
+  // If no <task> tags found, the description is a raw prompt (pre-modal cards)
+  // Show it as-is in the goal field so the user can restructure it
+  const goal = extractedGoal ?? description;
   const acceptanceCriteria =
     extractXmlSection(description, "acceptance_criteria")?.replace(
       /^The task is complete when ALL of the following are true:\n/,
@@ -138,6 +142,7 @@ export function CardModal({ allCards, existing, onConfirm, onCancel }: CardModal
     existing?.dependsOn ?? [],
   );
   const [titleError, setTitleError] = useState(false);
+  const [goalError, setGoalError] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false); // optional collapsible
 
@@ -170,6 +175,10 @@ export function CardModal({ allCards, existing, onConfirm, onCancel }: CardModal
   function handleSubmit() {
     if (!title.trim()) {
       setTitleError(true);
+      return;
+    }
+    if (!goal.trim()) {
+      setGoalError(true);
       return;
     }
     onConfirm(title.trim(), prompt, provider, dependsOn);
@@ -317,11 +326,24 @@ export function CardModal({ allCards, existing, onConfirm, onCancel }: CardModal
                 </label>
                 <textarea
                   value={goal}
-                  onChange={(e) => setGoal(e.target.value)}
+                  onChange={(e) => {
+                    setGoal(e.target.value);
+                    setGoalError(false);
+                  }}
                   placeholder="Implement JWT-based auth with refresh tokens using the existing User model."
                   rows={3}
-                  className="bg-surface-overlay border border-surface-border rounded-card px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary font-sans focus:outline-none focus:border-accent/60 transition-colors duration-200 resize-none leading-relaxed"
+                  className={[
+                    "bg-surface-overlay border rounded-card px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary font-sans focus:outline-none transition-colors duration-200 resize-none leading-relaxed",
+                    goalError
+                      ? "border-red-500/60"
+                      : "border-surface-border focus:border-accent/60",
+                  ].join(" ")}
                 />
+                {goalError && (
+                  <p className="text-[11px] text-red-400 font-mono">
+                    Describe what the agent should do.
+                  </p>
+                )}
               </div>
 
               {/* Acceptance criteria */}
