@@ -1,5 +1,6 @@
 import { dialog, ipcMain } from "electron";
 import {
+	checkProviderInstalled,
 	getBuffer,
 	killAgent,
 	resizeAgent,

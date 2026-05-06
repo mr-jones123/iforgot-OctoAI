@@ -11,19 +11,25 @@ import { SortableCard } from "./SortableCard";
 interface ColumnProps {
   column: ColumnType;
   cards: Card[];
+  allCards: Card[];
   onRunAll?: () => void;
   onAddCard: (
     title: string,
     description: string,
+    prompt: string,
     provider: AgentProvider,
+    dependsOn: string[],
   ) => void;
   onEditCard: (
     cardId: string,
     title: string,
     description: string,
+    prompt: string,
     provider: AgentProvider,
+    dependsOn: string[],
   ) => void;
   onDeleteCard: (cardId: string) => void;
+  onOpenEditModal: (card: Card) => void;
   onPlayCard: (cardId: string) => void;
   onStopCard: (cardId: string) => void;
   onOpenCard: (cardId: string) => void;
@@ -33,17 +39,17 @@ interface ColumnProps {
 export function Column({
   column,
   cards,
+  allCards,
   onRunAll,
   onAddCard,
-  onEditCard,
   onDeleteCard,
+  onOpenEditModal,
   onPlayCard,
   onStopCard,
   onOpenCard,
   blockedCardIds,
 }: ColumnProps) {
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingCard, setEditingCard] = useState<Card | null>(null);
 
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
@@ -143,7 +149,7 @@ export function Column({
                   onPlay={() => onPlayCard(card.id)}
                   onStop={() => onStopCard(card.id)}
                   onOpen={() => onOpenCard(card.id)}
-                  onEdit={() => setEditingCard(card)}
+                  onEdit={() => onOpenEditModal(card)}
                   onDelete={() => onDeleteCard(card.id)}
                 />
               ))
@@ -156,24 +162,12 @@ export function Column({
       {showAddModal && (
         <CardModal
           columnId={column.id}
-          onConfirm={(title, description, provider) => {
-            onAddCard(title, description, provider);
+          allCards={allCards}
+          onConfirm={(title, description, prompt, provider, dependsOn) => {
+            onAddCard(title, description, prompt, provider, dependsOn);
             setShowAddModal(false);
           }}
           onCancel={() => setShowAddModal(false)}
-        />
-      )}
-
-      {/* Edit modal */}
-      {editingCard && (
-        <CardModal
-          columnId={column.id}
-          existing={editingCard}
-          onConfirm={(title, description, provider) => {
-            onEditCard(editingCard.id, title, description, provider);
-            setEditingCard(null);
-          }}
-          onCancel={() => setEditingCard(null)}
         />
       )}
     </>
