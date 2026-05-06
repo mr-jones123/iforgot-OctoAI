@@ -14,6 +14,7 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import type { AgentProvider, Board, Card, Workspace } from "@riza/shared";
 import { useState } from "react";
+import { CardDetailPanel } from "./CardDetailPanel";
 import { TerminalPanel } from "../terminal/TerminalPanel";
 import { Column } from "./Column";
 import { KanbanCard } from "./KanbanCard";
@@ -31,6 +32,7 @@ function makeId() {
 
 export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
 	const [openCardId, setOpenCardId] = useState<string | null>(null);
+	const [panelMode, setPanelMode] = useState<"detail" | "terminal">("detail");
 	const [activeCard, setActiveCard] = useState<Card | null>(null);
 
 	const sensors = useSensors(
@@ -179,6 +181,8 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
 					: c,
 			),
 		);
+		setOpenCardId(cardId);
+		setPanelMode("terminal");
 		window.riza?.agent
 			.spawn({
 				cardId,
@@ -271,7 +275,11 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
 							onRunAll={() => runAll(col.id)}
 							onPlayCard={playCard}
 							onStopCard={stopCard}
-							onOpenCard={setOpenCardId}
+							onOpenCard={(cardId: string) => {
+					const c = cards.find((x) => x.id === cardId);
+					setOpenCardId(cardId);
+					setPanelMode(c && (c.status === "running" || c.status === "waiting") ? "terminal" : "detail");
+				}}
 						/>
 					))}
 				</div>
@@ -294,8 +302,26 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
 				) : null}
 			</DragOverlay>
 
-			{/* Terminal panel */}
-			{openCard && (
+			{/* Side panel — detail or terminal */}
+			{openCard && panelMode === "detail" && (
+				<CardDetailPanel
+					card={openCard}
+					allCards={cards}
+					isOpen={true}
+					onClose={() => setOpenCardId(null)}
+					onEdit={() => {
+						// Open edit modal by finding column and triggering edit
+						// For now, close detail panel so user can use the ··· menu
+						setOpenCardId(null);
+					}}
+					onPlay={() => playCard(openCard.id)}
+					onStop={() => stopCard(openCard.id)}
+					onViewTerminal={() => setPanelMode("terminal")}
+					isBlocked={blockedCardIds.has(openCard.id)}
+				/>
+			)}
+
+			{openCard && panelMode === "terminal" && (
 				<TerminalPanel
 					card={openCard}
 					isOpen={true}

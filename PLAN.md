@@ -6,16 +6,16 @@ Cards already have `dependsOn: string[]` in the shared types. The Board already 
 
 ## Files to Modify
 
-| File | Change |
-|---|---|
-| `apps/desktop/src/renderer/components/board/CardModal.tsx` | Add dependency multi-select |
-| `apps/desktop/src/renderer/components/board/Column.tsx` | Pass `allCards` to CardModal for dependency picker |
-| `apps/desktop/src/renderer/components/board/Board.tsx` | Pass `allCards` down to Column, pass `dependsOn` in spawn call |
-| `apps/desktop/src/main/ipc/index.ts` | Add `dependsOn` to spawn payload |
-| `apps/desktop/src/main/agents/spawner.ts` | Accept `dependsOn`, build context preamble from terminal buffers |
-| `apps/desktop/src/main/preload.ts` | Add `dependsOn` to spawn payload type |
-| `apps/desktop/src/renderer/globals.d.ts` | Add `dependsOn` to spawn payload type |
-| `packages/shared/src/types/card.ts` | Remove `channelId` (dead field from removed channels) |
+| File                                                       | Change                                                           |
+| ---------------------------------------------------------- | ---------------------------------------------------------------- |
+| `apps/desktop/src/renderer/components/board/CardModal.tsx` | Add dependency multi-select                                      |
+| `apps/desktop/src/renderer/components/board/Column.tsx`    | Pass `allCards` to CardModal for dependency picker               |
+| `apps/desktop/src/renderer/components/board/Board.tsx`     | Pass `allCards` down to Column, pass `dependsOn` in spawn call   |
+| `apps/desktop/src/main/ipc/index.ts`                       | Add `dependsOn` to spawn payload                                 |
+| `apps/desktop/src/main/agents/spawner.ts`                  | Accept `dependsOn`, build context preamble from terminal buffers |
+| `apps/desktop/src/main/preload.ts`                         | Add `dependsOn` to spawn payload type                            |
+| `apps/desktop/src/renderer/globals.d.ts`                   | Add `dependsOn` to spawn payload type                            |
+| `packages/shared/src/types/card.ts`                        | Remove `channelId` (dead field from removed channels)            |
 
 ## Steps
 
@@ -26,6 +26,7 @@ Cards already have `dependsOn: string[]` in the shared types. The Board already 
 ### Step 2: Add dependency picker to CardModal
 
 The modal already receives props but doesn't know about other cards. We need to:
+
 - Accept an `allCards` prop (the full card list for the board)
 - Add a "Depends on" section with checkboxes for other cards
 - For edit mode, pre-check existing `dependsOn`
