@@ -10,6 +10,7 @@ interface RizaAPI {
 			description: string;
 			worktreePath: string;
 			model?: string;
+			dependsOn?: string[];
 		}) => Promise<void>;
 		kill: (cardId: string) => Promise<void>;
 		onStatus: (

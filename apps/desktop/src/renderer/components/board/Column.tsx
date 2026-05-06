@@ -11,17 +11,20 @@ import { SortableCard } from "./SortableCard";
 interface ColumnProps {
   column: ColumnType;
   cards: Card[];
+  allCards: Card[];
   onRunAll?: () => void;
   onAddCard: (
     title: string,
     description: string,
     provider: AgentProvider,
+    dependsOn: string[],
   ) => void;
   onEditCard: (
     cardId: string,
     title: string,
     description: string,
     provider: AgentProvider,
+    dependsOn: string[],
   ) => void;
   onDeleteCard: (cardId: string) => void;
   onPlayCard: (cardId: string) => void;
@@ -33,6 +36,7 @@ interface ColumnProps {
 export function Column({
   column,
   cards,
+  allCards,
   onRunAll,
   onAddCard,
   onEditCard,
@@ -156,8 +160,9 @@ export function Column({
       {showAddModal && (
         <CardModal
           columnId={column.id}
-          onConfirm={(title, description, provider) => {
-            onAddCard(title, description, provider);
+          allCards={allCards}
+          onConfirm={(title, description, provider, dependsOn) => {
+            onAddCard(title, description, provider, dependsOn);
             setShowAddModal(false);
           }}
           onCancel={() => setShowAddModal(false)}
@@ -168,9 +173,10 @@ export function Column({
       {editingCard && (
         <CardModal
           columnId={column.id}
+          allCards={allCards}
           existing={editingCard}
-          onConfirm={(title, description, provider) => {
-            onEditCard(editingCard.id, title, description, provider);
+          onConfirm={(title, description, provider, dependsOn) => {
+            onEditCard(editingCard.id, title, description, provider, dependsOn);
             setEditingCard(null);
           }}
           onCancel={() => setEditingCard(null)}

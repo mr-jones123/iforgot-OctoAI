@@ -74,12 +74,56 @@ const BOOT_DELAY_MS: Record<AgentProvider, number> = {
 	ollama: 1000,
 };
 
+
+// ── Context injection helpers ──────────────────────────────────────────────
+
+// Strip ANSI escape sequences from terminal output
+function stripAnsi(text: string): string {
+	// eslint-disable-next-line no-control-regex
+	return text.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "");
+}
+
+// Extract the last N meaningful lines from a terminal buffer
+function extractBufferTail(buffer: string[], maxLines: number = 50): string {
+	const allText = buffer.join("");
+	const cleaned = stripAnsi(allText);
+	const lines = cleaned.split("\n").filter((l) => l.trim().length > 0);
+	return lines.slice(-maxLines).join("\n");
+}
+
+// Build context preamble from dependency card terminal buffers
+function buildContextPreamble(dependsOn: string[]): string {
+	const blocks: string[] = [];
+
+	for (const depId of dependsOn) {
+		const session = sessions.get(depId);
+		if (!session || session.buffer.length === 0) continue;
+
+		const tail = extractBufferTail(session.buffer, 50);
+		if (!tail) continue;
+
+		blocks.push(
+			`[Context from completed task: ${depId}]\n` +
+			`Terminal output (last 50 lines):\n${tail}`,
+		);
+	}
+
+	if (blocks.length === 0) return "";
+
+	return (
+		"The following context is from previously completed tasks that this task depends on. " +
+		"Use this information to understand what was already done.\n\n" +
+		blocks.join("\n\n---\n\n")
+	);
+}
+
 export function spawnAgent(
 	cardId: string,
 	provider: AgentProvider,
 	description: string,
 	worktreePath: string,
 	model?: string,
+	dependsOn?: string[],
 ): void {
 	console.log(
 		`[spawner] spawnAgent called: cardId=${cardId} provider=${provider} cwd=${worktreePath}`,
@@ -93,7 +137,16 @@ export function spawnAgent(
 		return;
 	}
 
-	const { cmd, args, injectStdin } = buildCommand(provider, description, model);
+	// Build context preamble from dependency cards
+	let enrichedDescription = description;
+	if (dependsOn && dependsOn.length > 0) {
+		const preamble = buildContextPreamble(dependsOn);
+		if (preamble) {
+			enrichedDescription = preamble + "\n\n---\n\n" + description;
+		}
+	}
+
+	const { cmd, args, injectStdin } = buildCommand(provider, enrichedDescription, model);
 
 	console.log(
 		`[spawner] full command: ${cmd} ${args.map((a) => `"${a.slice(0, 80)}"`).join(" ")}`,

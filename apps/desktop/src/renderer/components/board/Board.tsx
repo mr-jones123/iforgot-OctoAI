@@ -116,6 +116,7 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
 		title: string,
 		description: string,
 		provider: AgentProvider,
+		dependsOn: string[] = [],
 	) {
 		onCardsChange((prev) => [
 			...prev,
@@ -126,11 +127,10 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
 				title,
 				description,
 				agent: { provider },
-				channelId: makeId(),
 				status: "idle",
 				raisedHand: false,
 				order: prev.filter((c) => c.columnId === columnId).length,
-				dependsOn: [],
+				dependsOn,
 				createdAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
 			},
@@ -142,6 +142,7 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
 		title: string,
 		description: string,
 		provider: AgentProvider,
+		dependsOn: string[],
 	) {
 		onCardsChange((prev) =>
 			prev.map((c) =>
@@ -151,6 +152,7 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
 							title,
 							description,
 							agent: { ...c.agent, provider },
+							dependsOn,
 							updatedAt: new Date().toISOString(),
 						}
 					: c,
@@ -259,9 +261,10 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
 							cards={cards
 								.filter((c) => c.columnId === col.id)
 								.sort((a, b) => a.order - b.order)}
+							allCards={cards}
 							blockedCardIds={blockedCardIds}
-							onAddCard={(title, desc, provider) =>
-								addCard(col.id, title, desc, provider)
+							onAddCard={(title, desc, provider, dependsOn) =>
+								addCard(col.id, title, desc, provider, dependsOn)
 							}
 							onEditCard={editCard}
 							onDeleteCard={deleteCard}

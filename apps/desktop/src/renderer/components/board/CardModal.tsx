@@ -104,16 +104,18 @@ function extractXmlSection(text: string, tag: string): string | undefined {
 
 interface CardModalProps {
   columnId: string;
+  allCards: Card[];
   existing?: Card;
   onConfirm: (
     title: string,
     description: string,
     provider: AgentProvider,
+    dependsOn: string[],
   ) => void;
   onCancel: () => void;
 }
 
-export function CardModal({ existing, onConfirm, onCancel }: CardModalProps) {
+export function CardModal({ allCards, existing, onConfirm, onCancel }: CardModalProps) {
   const isEdit = !!existing;
 
   const parsed = existing ? parseDescription(existing.description) : null;
@@ -131,6 +133,9 @@ export function CardModal({ existing, onConfirm, onCancel }: CardModalProps) {
   );
   const [provider, setProvider] = useState<AgentProvider>(
     existing?.agent.provider ?? "claude-code",
+  );
+  const [dependsOn, setDependsOn] = useState<string[]>(
+    existing?.dependsOn ?? [],
   );
   const [titleError, setTitleError] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -167,7 +172,7 @@ export function CardModal({ existing, onConfirm, onCancel }: CardModalProps) {
       setTitleError(true);
       return;
     }
-    onConfirm(title.trim(), prompt, provider);
+    onConfirm(title.trim(), prompt, provider, dependsOn);
   }
 
   function handleCopy() {
@@ -437,6 +442,87 @@ export function CardModal({ existing, onConfirm, onCancel }: CardModalProps) {
                   ))}
                 </div>
               </div>
+
+              {/* Dependencies */}
+              {allCards.filter((c) => c.id !== existing?.id).length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-mono text-text-tertiary uppercase tracking-widest">
+                    Depends on
+                  </label>
+                  <p className="text-[11px] text-text-tertiary -mt-1">
+                    This card won\'t start until all dependencies are done.
+                  </p>
+                  <div className="flex flex-col gap-1 max-h-[160px] overflow-y-auto">
+                    {allCards
+                      .filter((c) => c.id !== existing?.id)
+                      .map((c) => {
+                        const checked = dependsOn.includes(c.id);
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => {
+                              setDependsOn((prev) =>
+                                checked
+                                  ? prev.filter((id) => id !== c.id)
+                                  : [...prev, c.id],
+                              );
+                            }}
+                            className={[
+                              "flex items-center gap-2 px-3 py-2 rounded-card border text-left transition-all duration-150 active:scale-[0.98]",
+                              checked
+                                ? "border-accent/60 bg-accent/10"
+                                : "border-surface-border hover:border-surface-muted",
+                            ].join(" ")}
+                          >
+                            <div
+                              className={[
+                                "w-3.5 h-3.5 rounded flex items-center justify-center border transition-colors",
+                                checked
+                                  ? "bg-accent border-accent"
+                                  : "border-surface-border",
+                              ].join(" ")}
+                            >
+                              {checked && (
+                                <svg
+                                  width="8"
+                                  height="8"
+                                  viewBox="0 0 8 8"
+                                  fill="none"
+                                  stroke="white"
+                                  strokeWidth="1.5"
+                                  strokeLinecap="round"
+                                >
+                                  <path d="M1.5 4 L3 5.5 L6.5 2" />
+                                </svg>
+                              )}
+                            </div>
+                            <span
+                              className={[
+                                "text-xs font-medium flex-1 truncate",
+                                checked ? "text-text-primary" : "text-text-secondary",
+                              ].join(" ")}
+                            >
+                              {c.title}
+                            </span>
+                            <span
+                              className={[
+                                "text-[9px] font-mono uppercase tracking-widest",
+                                c.status === "done"
+                                  ? "text-emerald-500"
+                                  : c.status === "running"
+                                    ? "text-blue-400"
+                                    : "text-text-tertiary",
+                              ].join(" ")}
+                            >
+                              {c.status}
+                            </span>
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
