@@ -322,7 +322,7 @@ export function CardModal({ allCards, existing, onConfirm, onCancel }: CardModal
               {/* Goal */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] font-mono text-text-tertiary uppercase tracking-widest">
-                  What should the agent do?
+                  What should the agent do? <span className="text-red-400">*</span>
                 </label>
                 <textarea
                   value={goal}
