@@ -42,15 +42,13 @@ function buildCommand(
 				args: ["--prompt-interactive", description, "--yolo", "--skip-trust"],
 				injectStdin: false,
 			};
-		case "opencode":
-			// opencode starts the interactive TUI. Pass prompt as positional arg.
-			// Supports --model provider/model format, --agent for custom agents.
-			// Docs: https://opencode.ai/docs/cli/
+		case "amp":
+			// Amp by Sourcegraph — interactive TUI with positional prompt arg.
+			// Also supports: amp -x "prompt" for non-interactive execute mode.
+			// Docs: https://ampcode.com/manual
 			return {
-				cmd: "opencode",
-				args: model
-					? ["--model", model, description]
-					: [description],
+				cmd: "amp",
+				args: [description],
 				injectStdin: false,
 			};
 	}
@@ -75,7 +73,7 @@ const BOOT_DELAY_MS: Record<AgentProvider, number> = {
 	"claude-code": 3000,
 	codex: 2000,
 	gemini: 2000,
-	opencode: 3000,
+	amp: 3000,
 };
 
 

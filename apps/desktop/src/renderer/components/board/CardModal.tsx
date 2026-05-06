@@ -14,7 +14,7 @@ const PROVIDERS: { id: AgentProvider; label: string; description: string }[] = [
   },
   { id: "codex", label: "Codex", description: "OpenAI · versatile" },
   { id: "gemini", label: "Gemini CLI", description: "Google · multimodal" },
-  { id: "opencode", label: "OpenCode", description: "Multi-provider · BYOK" },
+  { id: "amp", label: "Amp", description: "Sourcegraph · multi-model" },
 ];
 
 // ── Default system instruction ─────────────────────────────────────────────

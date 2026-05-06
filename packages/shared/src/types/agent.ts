@@ -1,4 +1,4 @@
-export type AgentProvider = "claude-code" | "codex" | "gemini" | "opencode";
+export type AgentProvider = "claude-code" | "codex" | "gemini" | "amp";
 
 export interface AgentConfig {
 	provider: AgentProvider;
@@ -20,5 +20,5 @@ export const AGENT_COMMANDS: Record<AgentProvider, string> = {
 	"claude-code": "claude",
 	codex: "codex",
 	gemini: "gemini",
-	opencode: "opencode",
+	amp: "amp",
 };
