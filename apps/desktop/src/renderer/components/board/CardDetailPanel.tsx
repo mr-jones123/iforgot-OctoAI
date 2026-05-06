@@ -17,7 +17,7 @@ const PROVIDER_LABELS: Record<string, string> = {
 	"claude-code": "Claude Code",
 	codex: "Codex",
 	gemini: "Gemini CLI",
-	ollama: "Ollama",
+	opencode: "OpenCode",
 };
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {

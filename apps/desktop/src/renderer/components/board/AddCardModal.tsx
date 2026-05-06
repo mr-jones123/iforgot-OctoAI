@@ -15,7 +15,7 @@ const PROVIDERS: { id: AgentProvider; label: string }[] = [
   { id: "claude-code", label: "Claude Code" },
   { id: "codex", label: "Codex" },
   { id: "gemini", label: "Gemini CLI" },
-  { id: "ollama", label: "Ollama" },
+  { id: "opencode", label: "OpenCode" },
 ];
 
 export function AddCardModal({ onConfirm, onCancel }: AddCardModalProps) {

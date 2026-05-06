@@ -25,7 +25,7 @@ const PROVIDER_LABELS: Record<string, string> = {
   "claude-code": "Claude",
   codex: "Codex",
   gemini: "Gemini",
-  ollama: "Ollama",
+  opencode: "OpenCode",
 };
 
 export function KanbanCard({
