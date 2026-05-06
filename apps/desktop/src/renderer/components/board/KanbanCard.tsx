@@ -47,13 +47,15 @@ export function KanbanCard({
       return;
     }
     let cancelled = false;
-    window.riza?.agent.checkInstalled(card.agent.provider).then((result) => {
+    const check = window.riza?.agent?.checkInstalled;
+    if (!check) return;
+    check(card.agent.provider).then((result) => {
       if (!cancelled && !result.installed) {
         setNotInstalled(result.hint);
       } else if (!cancelled) {
         setNotInstalled(null);
       }
-    });
+    }).catch(() => {});
     return () => { cancelled = true; };
   }, [card.agent.provider, card.status]);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
