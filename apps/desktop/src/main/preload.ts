@@ -32,6 +32,37 @@ contextBridge.exposeInMainWorld("riza", {
 		cardDelete: (cardId: string) => ipcRenderer.invoke("card:delete", cardId),
 	},
 
+	// Card scheduling
+	card: {
+		schedule: (payload: {
+			cardId: string;
+			provider: string;
+			description: string;
+			worktreePath: string;
+			scheduledAt: string;
+			model?: string;
+			dependsOn?: string[];
+		}) => ipcRenderer.invoke("card:schedule", payload),
+		unschedule: (cardId: string) =>
+			ipcRenderer.invoke("card:unschedule", cardId),
+		onFire: (cb: (cardId: string) => void) => {
+			const handler = (
+				_e: Electron.IpcRendererEvent,
+				payload: { cardId: string },
+			) => cb(payload.cardId);
+			ipcRenderer.on("scheduler:fire", handler);
+			return () => ipcRenderer.removeListener("scheduler:fire", handler);
+		},
+		onOverdue: (cb: (cardId: string) => void) => {
+			const handler = (
+				_e: Electron.IpcRendererEvent,
+				payload: { cardId: string },
+			) => cb(payload.cardId);
+			ipcRenderer.on("scheduler:overdue", handler);
+			return () => ipcRenderer.removeListener("scheduler:overdue", handler);
+		},
+	},
+
 	// Agent control
 	agent: {
 		spawn: (payload: {

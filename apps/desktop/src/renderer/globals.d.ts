@@ -1,5 +1,19 @@
 // Type declarations for the contextBridge API exposed by preload.ts
 interface RizaAPI {
+	card: {
+		schedule: (payload: {
+			cardId: string;
+			provider: string;
+			description: string;
+			worktreePath: string;
+			scheduledAt: string;
+			model?: string;
+			dependsOn?: string[];
+		}) => Promise<void>;
+		unschedule: (cardId: string) => Promise<void>;
+		onFire: (cb: (cardId: string) => void) => () => void;
+		onOverdue: (cb: (cardId: string) => void) => () => void;
+	};
 	dialog: {
 		openFolder: () => Promise<string | null>;
 	};
