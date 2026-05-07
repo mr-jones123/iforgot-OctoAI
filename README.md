@@ -2,6 +2,12 @@
 
 A desktop app for orchestrating AI coding agents. You're the PM — Claude Code, Codex, Gemini, and Amp are your team.
 
+<img width="573" height="369" alt="image" src="https://github.com/user-attachments/assets/e26e948e-1315-47ca-bf2c-d8d03bfe948e" />
+
+<img width="562" height="367" alt="image" src="https://github.com/user-attachments/assets/b7401f8b-f83f-42d0-86f8-0b8026d65273" />
+
+
+
 ## Concept
 
 - Kanban board per workspace (project/repo)
