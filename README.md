@@ -2,12 +2,20 @@
 
 A desktop app for orchestrating AI coding agents. You're the PM — Claude Code, Codex, Gemini, and Amp are your team.
 
+### Workspace Creation
+<img width="887" height="448" alt="image" src="https://github.com/user-attachments/assets/17b62e95-079d-43a2-aac6-811a8f062449" />
 
 ### Multi-Agent Workspace
 <img width="573" height="369" alt="image" src="https://github.com/user-attachments/assets/e26e948e-1315-47ca-bf2c-d8d03bfe948e" />
 
 ### Parallel Task Orchestration
 <img width="562" height="367" alt="image" src="https://github.com/user-attachments/assets/b7401f8b-f83f-42d0-86f8-0b8026d65273" />
+
+### Cost Tracking
+<img width="524" height="343" alt="image" src="https://github.com/user-attachments/assets/bf69ec5b-237c-40f7-8e81-ef763b7a6567" />
+
+
+
 
 
 
