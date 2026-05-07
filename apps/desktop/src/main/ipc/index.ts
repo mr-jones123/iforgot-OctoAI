@@ -1,4 +1,5 @@
 import { dialog, ipcMain } from "electron";
+import type { CardCost } from "@riza/shared";
 import {
 	checkProviderInstalled,
 	getBuffer,
@@ -8,6 +9,9 @@ import {
 	writeToAgent,
 } from "../agents/spawner";
 import { scheduleCard, unscheduleCard } from "../scheduler";
+
+// In-memory store of costs keyed by cardId — persists across panel opens
+const cardCosts = new Map<string, CardCost>();
 
 export function registerIpcHandlers() {
 	// ── Dialog ────────────────────────────────────────────────────────────────
@@ -78,6 +82,21 @@ export function registerIpcHandlers() {
 	// Cancel the timer for a card (deleted, edited to remove schedule, or manually played).
 	ipcMain.handle("card:unschedule", (_e, cardId: string) => {
 		unscheduleCard(cardId);
+	});
+
+	// ── Analytics / Cost ──────────────────────────────────────────────────────
+
+	// Store cost when spawner emits it (internal — not invoked by renderer)
+	ipcMain.on(
+		"_internal:cost",
+		(_e, payload: { cardId: string; cost: CardCost }) => {
+			cardCosts.set(payload.cardId, payload.cost);
+		},
+	);
+
+	// Renderer can fetch all stored costs
+	ipcMain.handle("analytics:getCosts", () => {
+		return Object.fromEntries(cardCosts.entries());
 	});
 
 	// Replay buffered output to a terminal panel that just opened

@@ -2,6 +2,16 @@ import type { AgentConfig } from "./agent";
 
 export type CardStatus = "idle" | "running" | "waiting" | "done" | "failed";
 
+/** Token usage + estimated cost for a completed card run */
+export interface CardCost {
+	inputTokens: number;
+	outputTokens: number;
+	cachedTokens: number;
+	totalTokens: number;
+	estimatedCostUsd: number;
+	source: "jsonl" | "pty-scrape" | "unknown";
+}
+
 export interface Card {
 	id: string;
 	boardId: string;
@@ -15,6 +25,9 @@ export interface Card {
 	status: CardStatus;
 	raisedHand: boolean;
 	order: number;
+	startedAt?: string;
+	finishedAt?: string;
+	cost?: CardCost;
 	dependsOn: string[];
 	scheduledAt?: string | null; // ISO 8601 — if set, the main process fires the agent at this time
 	createdAt: string;
