@@ -5,7 +5,7 @@ A desktop app for orchestrating AI coding agents. You're the PM — Claude Code,
 <img width="959" height="539" alt="image" src="https://github.com/user-attachments/assets/2e79c58e-e8b3-4882-9643-da367f8a5f41" />
 
 
-###Features
+## Features
 - **Workspace Creation**
 - **Multi-Agent Workspace**
 - **Parallel Task Orchestration**
