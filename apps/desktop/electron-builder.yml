@@ -1,4 +1,4 @@
-appId: com.riza.desktop
+appId: com.octoai.desktop
 productName: OctoAI
 directories:
   buildResources: resources
@@ -19,22 +19,25 @@ extraResources:
 mac:
   icon: resources/icon.icns
   category: public.app-category.developer-tools
+  artifactName: OctoAI.dmg
   target:
     - dmg
     - zip
 dmg:
   contents:
     - x: 130
-      "y": 220
+      y: 220
     - x: 410
-      "y": 220
+      y: 220
       type: link
       path: /Applications
 win:
   icon: resources/icon.ico
+  artifactName: OctoAI-Setup.exe
   target:
     - nsis
 linux:
   icon: resources/icon.icns
+  artifactName: OctoAI.AppImage
   target:
     - AppImage
