@@ -19,11 +19,11 @@ extraResources:
 mac:
   icon: resources/icon.icns
   category: public.app-category.developer-tools
-  artifactName: OctoAI.dmg
   target:
     - dmg
     - zip
 dmg:
+  artifactName: OctoAI.dmg
   contents:
     - x: 130
       y: 220
@@ -33,11 +33,13 @@ dmg:
       path: /Applications
 win:
   icon: resources/icon.ico
-  artifactName: OctoAI-Setup.exe
   target:
     - nsis
+nsis:
+  artifactName: OctoAI-Setup.exe
 linux:
   icon: resources/icon.icns
-  artifactName: OctoAI.AppImage
   target:
     - AppImage
+appImage:
+  artifactName: OctoAI.AppImage
