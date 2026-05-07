@@ -1,4 +1,14 @@
 // Type declarations for the contextBridge API exposed by preload.ts
+
+interface CardCost {
+	inputTokens: number;
+	outputTokens: number;
+	cachedTokens: number;
+	totalTokens: number;
+	estimatedCostUsd: number;
+	source: "jsonl" | "pty-scrape" | "unknown";
+}
+
 interface RizaAPI {
 	card: {
 		schedule: (payload: {
@@ -32,13 +42,21 @@ interface RizaAPI {
 				cardId: string;
 				state: "running" | "done" | "failed" | "waiting" | "idle";
 				raisedHand: boolean;
+				startedAt?: string;
+				finishedAt?: string;
 			}) => void,
+		) => () => void;
+		onCost: (
+			cb: (payload: { cardId: string; cost: CardCost }) => void,
 		) => () => void;
 		checkInstalled: (provider: string) => Promise<{
 			installed: boolean;
 			command: string;
 			hint: string;
 		}>;
+	};
+	analytics: {
+		getCosts: () => Promise<Record<string, CardCost>>;
 	};
 	terminal: {
 		input: (cardId: string, data: string) => void;

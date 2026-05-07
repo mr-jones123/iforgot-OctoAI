@@ -3,12 +3,21 @@ import { BrowserWindow } from "electron";
 import { execSync } from "node:child_process";
 import type { IDisposable, IPty } from "node-pty";
 import * as pty from "node-pty";
+import {
+	parseAmpStats,
+	parseGeminiStats,
+	readCostFromFiles,
+} from "./costReader";
 
 interface Session {
 	pty: IPty;
 	dataListener: IDisposable;
 	// Rolling buffer of output — replayed to the terminal panel when it connects
 	buffer: string[];
+	spawnedAt: Date;
+	worktreePath: string;
+	provider: AgentProvider;
+	model?: string;
 }
 
 const sessions = new Map<string, Session>();
@@ -47,7 +56,7 @@ export function checkProviderInstalled(provider: AgentProvider): {
 function buildCommand(
 	provider: AgentProvider,
 	description: string,
-	model?: string,
+	_model?: string,
 ): { cmd: string; args: string[]; injectStdin: boolean } {
 	switch (provider) {
 		case "claude-code":
@@ -107,7 +116,6 @@ const BOOT_DELAY_MS: Record<AgentProvider, number> = {
 	amp: 3000,
 };
 
-
 // ── Context injection helpers ──────────────────────────────────────────────
 
 // Strip ANSI escape sequences from terminal output
@@ -137,7 +145,7 @@ function buildContextPreamble(dependsOn: string[]): string {
 
 		blocks.push(
 			`[Context from completed task: ${depId}]\n` +
-			`Terminal output (last 50 lines):\n${tail}`,
+				`Terminal output (last 50 lines):\n${tail}`,
 		);
 	}
 
@@ -190,6 +198,10 @@ export function spawnAgent(
 			pty: null as never,
 			dataListener: null as never,
 			buffer: [errText],
+			spawnedAt: new Date(),
+			worktreePath,
+			provider,
+			model,
 		};
 		sessions.set(cardId, errorSession);
 		sendToTerminal(cardId, errText);
@@ -201,7 +213,11 @@ export function spawnAgent(
 		return;
 	}
 
-	const { cmd, args, injectStdin } = buildCommand(provider, enrichedDescription, model);
+	const { cmd, args, injectStdin } = buildCommand(
+		provider,
+		enrichedDescription,
+		model,
+	);
 
 	console.log(
 		`[spawner] full command: ${cmd} ${args.map((a) => `"${a.slice(0, 80)}"`).join(" ")}`,
@@ -227,6 +243,10 @@ export function spawnAgent(
 			pty: null as never,
 			dataListener: null as never,
 			buffer: [],
+			spawnedAt: new Date(),
+			worktreePath,
+			provider,
+			model,
 		};
 		const errText = `\x1b[31m[riza] Failed to start agent: ${msg}\r\n\x1b[33m[riza] Make sure '${cmd}' is installed and in your PATH.\r\n\x1b[0m`;
 		errorSession.buffer.push(errText);
@@ -244,6 +264,10 @@ export function spawnAgent(
 		pty: ptyProcess,
 		dataListener: null as never,
 		buffer: [],
+		spawnedAt: new Date(),
+		worktreePath,
+		provider,
+		model,
 	};
 	sessions.set(cardId, session);
 
@@ -295,15 +319,49 @@ export function spawnAgent(
 		console.log(
 			`[spawner] ${cmd} pid=${ptyProcess.pid} exited code=${exitCode}`,
 		);
+		const finishedAt = new Date().toISOString();
 		const exitMsg = `\x1b[90m\r\n[riza] Process exited (code ${exitCode})\r\n\x1b[0m`;
 		bufferAndSend(session, cardId, exitMsg);
+		// Keep session in map so buffer remains available for replay
+		session.dataListener?.dispose();
+
+		// Emit status first so card flips to done/failed immediately
 		getWin()?.webContents.send("agent:status", {
 			cardId,
 			state: exitCode === 0 ? "done" : "failed",
 			raisedHand: false,
+			startedAt: session.spawnedAt.toISOString(),
+			finishedAt,
 		});
-		// Keep session in map so buffer remains available for replay
-		session.dataListener?.dispose();
+
+		// Async: read cost from files (claude/codex) or scrape PTY (gemini/amp)
+		void (async () => {
+			try {
+				let cost = await readCostFromFiles(
+					session.provider,
+					session.spawnedAt,
+					session.worktreePath,
+					session.model,
+				);
+
+				// PTY scrape fallback for gemini + amp
+				if (!cost) {
+					const bufText = session.buffer.join("");
+					if (session.provider === "gemini") {
+						cost = parseGeminiStats(bufText);
+					} else if (session.provider === "amp") {
+						cost = parseAmpStats(bufText);
+					}
+				}
+
+				if (cost) {
+					console.log(`[spawner] cost for ${cardId}:`, cost);
+					getWin()?.webContents.send("agent:cost", { cardId, cost });
+				}
+			} catch (err) {
+				console.error(`[spawner] cost read failed for ${cardId}:`, err);
+			}
+		})();
 	});
 }
 

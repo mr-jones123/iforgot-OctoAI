@@ -25,6 +25,7 @@
     "@phosphor-icons/react": "^2.1.7",
     "@riza/shared": "*",
     "better-sqlite3": "^11.0.0",
+    "chokidar": "^3.6.0",
     "framer-motion": "^11.0.0",
     "node-pty": "^1.0.0",
     "react": "^18.3.0",

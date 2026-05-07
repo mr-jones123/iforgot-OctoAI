@@ -77,6 +77,18 @@ contextBridge.exposeInMainWorld("riza", {
 			ipcRenderer.on("agent:status", (_e, status) => cb(status));
 			return () => ipcRenderer.removeAllListeners("agent:status");
 		},
+		onCost: (cb: (payload: unknown) => void) => {
+			const handler = (_e: Electron.IpcRendererEvent, payload: unknown) =>
+				cb(payload);
+			ipcRenderer.on("agent:cost", handler);
+			return () => ipcRenderer.removeListener("agent:cost", handler);
+		},
+	},
+
+	// Analytics
+	analytics: {
+		getCosts: (): Promise<Record<string, unknown>> =>
+			ipcRenderer.invoke("analytics:getCosts"),
 	},
 
 	// Terminal I/O

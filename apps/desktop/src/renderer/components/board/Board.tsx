@@ -87,6 +87,42 @@ export function Board({ workspace, board, cards, onCardsChange }: BoardProps) {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [board.id]);
 
+	// ── Agent status + cost IPC subscriptions ─────────────────────────────────
+
+	useEffect(() => {
+		const unsubStatus = window.riza?.agent.onStatus((status) => {
+			onCardsChange((prev) =>
+				prev.map((c) =>
+					c.id === status.cardId
+						? {
+								...c,
+								status: status.state,
+								startedAt: status.startedAt ?? c.startedAt,
+								finishedAt: status.finishedAt ?? c.finishedAt,
+								updatedAt: new Date().toISOString(),
+							}
+						: c,
+				),
+			);
+		});
+
+		const unsubCost = window.riza?.agent.onCost((payload) => {
+			onCardsChange((prev) =>
+				prev.map((c) =>
+					c.id === payload.cardId
+						? { ...c, cost: payload.cost, updatedAt: new Date().toISOString() }
+						: c,
+				),
+			);
+		});
+
+		return () => {
+			unsubStatus?.();
+			unsubCost?.();
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [board.id]);
+
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
 	);
