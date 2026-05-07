@@ -7,6 +7,7 @@ import {
 	spawnAgent,
 	writeToAgent,
 } from "../agents/spawner";
+import { scheduleCard, unscheduleCard } from "../scheduler";
 
 export function registerIpcHandlers() {
 	// ── Dialog ────────────────────────────────────────────────────────────────
@@ -47,6 +48,36 @@ export function registerIpcHandlers() {
 
 	ipcMain.handle("agent:kill", (_e, cardId: string) => {
 		killAgent(cardId);
+	});
+
+	// ── Scheduler ─────────────────────────────────────────────────────────────
+
+	// Register or re-register a scheduled card.
+	// Called whenever a card with scheduledAt is created, edited, or restored on mount.
+	ipcMain.handle(
+		"card:schedule",
+		(
+			_e,
+			payload: {
+				cardId: string;
+				provider: string;
+				description: string;
+				worktreePath: string;
+				scheduledAt: string;
+				model?: string;
+				dependsOn?: string[];
+			},
+		) => {
+			scheduleCard({
+				...payload,
+				provider: payload.provider as never,
+			});
+		},
+	);
+
+	// Cancel the timer for a card (deleted, edited to remove schedule, or manually played).
+	ipcMain.handle("card:unschedule", (_e, cardId: string) => {
+		unscheduleCard(cardId);
 	});
 
 	// Replay buffered output to a terminal panel that just opened
